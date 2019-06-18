@@ -74,6 +74,7 @@ def fun(arg1: int, arg2: str = 'Hello World!'):
 ```
 
 **Screenshot:**
+
 ![recommended docstring screenshot](img/recommend_docstring.png)
 
 
