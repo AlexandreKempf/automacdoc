@@ -8,16 +8,16 @@ from automacdoc import write_doc
 
 def main(argv=None):
     argv = sys.argv if argv is None else argv
-    write_doc(argv[1], argv[2])
 
-    sleep(1)
+    try:
+        write_doc(argv[1], argv[2])        
+    except Exception as error:
+        print("[-] Error ", str(error))
+        return
 
     os.chdir(argv[2])
-
     call(["mkdocs", "build", "--clean"])
     Popen(["mkdocs", "serve"])
-
-    sleep(2)
 
     webbrowser.open("http://127.0.0.1:8000/")
 
