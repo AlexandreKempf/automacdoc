@@ -3,6 +3,7 @@ import inspect
 import importlib
 import os
 import sys
+import platform
 import glob
 # ----------------
 
@@ -204,7 +205,10 @@ def write_module(
     package_path = os.path.abspath(path_to_home)
     sys.path.insert(0, package_path)
 
-    module = importlib.import_module(module_import, package=module_import.split(".")[0])
+    try:
+        module = importlib.import_module(module_import, package=module_import.split(".")[0])
+    except ModuleNotFoundError as error:
+        raise ModuleNotFoundError(str(error) + " in " + module_import)
 
     clas = [
         create_class(n, o, ignore_prefix_function)
@@ -294,7 +298,7 @@ This website contains the documentation for the wonderful project {0}
     indexmd_file.close()
 
 
-def write_doc(src, mainfolder):
+def write_doc(src:str, mainfolder:str):
     # variables
     project_icon = "code"  # https://material.io/tools/icons/?style=baseline
 
@@ -304,6 +308,12 @@ def write_doc(src, mainfolder):
     doc_path = os.path.join(os.path.abspath(mainfolder), "docs")
     package_name = code_path.split("/")[-1]
     root_path = os.path.dirname(code_path)
+    
+    #Since windows and Linux platforms utilizes different slash in their file structure
+    system_slash_style = {
+        "Windows" : "\\",
+        "Linux": "/"
+    }
 
     # load the architecture of the module
     ign_pref_file = "__"
@@ -311,23 +321,40 @@ def write_doc(src, mainfolder):
     list_glob = [
         p
         for p in full_list_glob
-        if "/" + ign_pref_file not in p and os.path.isfile(p) and p[-3:] == ".py"
+        if "/" + ign_pref_file not in p and os.path.isfile(p) and p[-3:] == ".py" \
+            and "__init__" not in p
     ]
 
     # write every markdown files based on the architecture
     toc = ""
     for mod in list_glob:
-        module_name = mod[len(root_path) + 1 : -3].replace("/", ".")
+        module_name = mod[len(root_path) + 1 : -3]\
+            .replace(system_slash_style[platform.system()], ".")
         mdfile_path = os.path.join(doc_path, mod[len(code_path) + 1 : -3] + ".md")
         mdfile_name = mdfile_path[len(doc_path) + 1 :]
-        toc += get_toc_lines_from_file_path(mdfile_name)
-        write_module(root_path, module_name, mdfile_path)
+        try:
+            write_module(root_path, module_name, mdfile_path)
+            toc += get_toc_lines_from_file_path(mdfile_name)
+        except Exception as error:
+            print("[-]Warning ",error)
+            
+    if len(toc) == 0:
+        raise ValueError("All the files seems invalid")
 
+    
+    #removed the condition because it would'nt update the yml file in case
+    #of any update in the source code
     yml_path = os.path.join(mainfolder, 'mkdocs.yml')
+    write_mkdocs_yaml(yml_path, project_name, toc)
+
+    index_path = os.path.join(doc_path, 'index.md')
+    write_indexmd(index_path, project_name)
+    
+    """
     if not os.path.isfile(yml_path):
         write_mkdocs_yaml(yml_path, project_name, toc)
 
     index_path = os.path.join(doc_path, 'index.md')
     if not os.path.isfile(index_path):
         write_indexmd(index_path, project_name)
-    return
+    """
