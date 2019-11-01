@@ -7,6 +7,7 @@ import platform
 import glob
 # ----------------
 
+
 def rm_docstring_from_source(source):
     """
     Remote the docstring from the source code of a function or a class
@@ -18,7 +19,8 @@ def rm_docstring_from_source(source):
     > `str` -- Source code of a class without docstring
     """
     source = source.split('"""')
-    del source[1]  # remove docstring
+    if len(source) > 1:
+        del source[1]  # remove docstring
     source = "".join(source)
     # to handle intendation inside functions and classes
     source = source.split("\n")
@@ -50,7 +52,7 @@ def create_fun(name: str, obj, ignore_prefix_function: str):
 
     if (
         ignore_prefix_function is not None
-        and name[: len(ignore_prefix_function)] == ignore_prefix_function
+        and name[:len(ignore_prefix_function)] == ignore_prefix_function
     ):
         return None
 
@@ -115,7 +117,8 @@ function_name_md = (
 )  # name, args
 doc_md = "{}\n".format  # doc
 source_md = (
-    '\n\n??? info "Source Code" \n\t```py3 linenums="1 1 2" \n{}\n\t```\n'.format
+    '\n\n??? info "Source Code" \n\t```py3 linenums="1 1 2" \n{}\n\t```\n'.
+    format
 )  # source
 
 
@@ -149,7 +152,9 @@ def write_method(md_file, method, clas):
     if method is None:
         return
 
-    md_file.writelines(method_name_md(clas["name"], method["name"], method["args"]))
+    md_file.writelines(
+        method_name_md(clas["name"], method["name"], method["args"])
+    )
     md_file.writelines(doc_md(method["doc"]))
     md_file.writelines(source_md(method["source"]))
 
@@ -183,7 +188,9 @@ def write_class(md_file, clas):
         write_method(md_file, m, clas)
 
     for f in clas["functions"]:
-        write_method(md_file, f, clas)  # use write_method to get the clas prefix
+        write_method(
+            md_file, f, clas
+        )  # use write_method to get the clas prefix
 
 
 def write_module(
@@ -206,7 +213,9 @@ def write_module(
     sys.path.insert(0, package_path)
 
     try:
-        module = importlib.import_module(module_import, package=module_import.split(".")[0])
+        module = importlib.import_module(
+            module_import, package=module_import.split(".")[0]
+        )
     except ModuleNotFoundError as error:
         raise ModuleNotFoundError(str(error) + " in " + module_import)
 
@@ -254,7 +263,7 @@ def write_mkdocs_yaml(path_to_yaml: str, project_name: str, toc: str):
     > **toc:** `str` -- the toc and the all hierarchy of the website
     """
     yaml_file = open(path_to_yaml, "w")
-    content ="""site_name: {}
+    content = """site_name: {}
 theme:
   name: 'material'
 nav:
@@ -274,12 +283,9 @@ markdown_extensions:
     - pymdownx.emoji
     - pymdownx.inlinehilite
     - pymdownx.magiclink
-    """.format(
-        project_name, toc
-    )
+    """.format(project_name, toc)
     yaml_file.writelines(content)
     yaml_file.close()
-
 
 
 def write_indexmd(path_to_indexmd: str, project_name: str):
@@ -291,14 +297,14 @@ def write_indexmd(path_to_indexmd: str, project_name: str):
     > **project_name:** `str` -- name of the project
     """
     indexmd_file = open(path_to_indexmd, "w")
-    content ="""# Welcome to {0}
+    content = """# Welcome to {0}
 This website contains the documentation for the wonderful project {0}
 """.format(project_name)
     indexmd_file.writelines(content)
     indexmd_file.close()
 
 
-def write_doc(src:str, mainfolder:str):
+def write_doc(src: str, mainfolder: str):
     # variables
     project_icon = "code"  # https://material.io/tools/icons/?style=baseline
 
@@ -308,12 +314,9 @@ def write_doc(src:str, mainfolder:str):
     doc_path = os.path.join(os.path.abspath(mainfolder), "docs")
     package_name = code_path.split("/")[-1]
     root_path = os.path.dirname(code_path)
-    
+
     #Since windows and Linux platforms utilizes different slash in their file structure
-    system_slash_style = {
-        "Windows" : "\\",
-        "Linux": "/"
-    }
+    system_slash_style = {"Windows": "\\", "Linux": "/"}
 
     # load the architecture of the module
     ign_pref_file = "__"
@@ -330,18 +333,19 @@ def write_doc(src:str, mainfolder:str):
     for mod in list_glob:
         module_name = mod[len(root_path) + 1 : -3]\
             .replace(system_slash_style[platform.system()], ".")
-        mdfile_path = os.path.join(doc_path, mod[len(code_path) + 1 : -3] + ".md")
-        mdfile_name = mdfile_path[len(doc_path) + 1 :]
+        mdfile_path = os.path.join(
+            doc_path, mod[len(code_path) + 1:-3] + ".md"
+        )
+        mdfile_name = mdfile_path[len(doc_path) + 1:]
         try:
             write_module(root_path, module_name, mdfile_path)
             toc += get_toc_lines_from_file_path(mdfile_name)
         except Exception as error:
-            print("[-]Warning ",error)
-            
+            print("[-]Warning ", error)
+
     if len(toc) == 0:
         raise ValueError("All the files seems invalid")
 
-    
     #removed the condition because it would'nt update the yml file in case
     #of any update in the source code
     yml_path = os.path.join(mainfolder, 'mkdocs.yml')
@@ -349,7 +353,6 @@ def write_doc(src:str, mainfolder:str):
 
     index_path = os.path.join(doc_path, 'index.md')
     write_indexmd(index_path, project_name)
-    
     """
     if not os.path.isfile(yml_path):
         write_mkdocs_yaml(yml_path, project_name, toc)
