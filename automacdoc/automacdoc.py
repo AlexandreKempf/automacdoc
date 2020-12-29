@@ -332,7 +332,7 @@ def write_doc(src: str, mainfolder: str):
     toc = ""
     for mod in list_glob:
         module_name = mod[len(root_path) + 1 : -3]\
-            .replace(system_slash_style[platform.system()], ".")
+            .replace(system_slash_style.get(platform.system(), "/"), ".")
         mdfile_path = os.path.join(
             doc_path, mod[len(code_path) + 1:-3] + ".md"
         )
