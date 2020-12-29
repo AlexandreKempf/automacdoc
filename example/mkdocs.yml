@@ -1,0 +1,26 @@
+site_name: example
+theme:
+  name: 'material'
+nav:
+    - Home: index.md
+    - Reference:
+        - subfolder:
+                - subfolder/functions.md
+        - functions.md
+        - fullsupport_docstring.md
+        - class_and_function.md
+
+markdown_extensions:
+    - toc:
+        toc_depth: 3
+        permalink: True
+    - extra
+    - smarty
+    - codehilite
+    - admonition
+    - pymdownx.details
+    - pymdownx.superfences
+    - pymdownx.emoji
+    - pymdownx.inlinehilite
+    - pymdownx.magiclink
+    

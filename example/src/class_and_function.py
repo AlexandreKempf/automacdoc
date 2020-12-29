@@ -36,7 +36,7 @@ def maxi2pourvoir(x, y):
 
 
 class Shark:
-    
+
     @classmethod
     def swimclass(self, a):
         """
